@@ -60,7 +60,7 @@ M.move_cursor = function ()
 end
 
 M.destroy = function ()
-  ui:destroy()
+  M.ui:destroy()
   dbus.disconnect()
 end
 

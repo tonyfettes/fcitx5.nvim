@@ -19,10 +19,11 @@ use {
 
 ## Roadmap
 
-- [ ] Fix error on exit
+- [x] Fix error on exit
 - [ ] Switchable input method and group (currently hardcoded to 'rime')
 - [ ] Highlight
 - [ ] UI glitch on first keystroke after insert
+- [ ] Command-line support
 - [ ] Horizontal/Vertical layout
 - [ ] Candidate list margin
 - [ ] Commit when focus out

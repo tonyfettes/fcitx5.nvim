@@ -20,6 +20,7 @@ local vim_api = vim.api
 ---@field preedit ui.preedit
 ---@field attach function
 ---@field detach function
+---@field destroy function
 ---@field update function
 ---@field commit function
 ---@field move_cursor function
@@ -32,14 +33,15 @@ M.new = function (ns_id)
   ---@type ui
   local new_ui = {
     ns_id = ns_id,
-    input = nil,
-    preedit = nil,
+    input = {},
+    preedit = {},
     attach = M.attach,
     detach = M.detach,
     update = M.update,
     commit = M.commit,
     move_cursor = M.move_cursor,
     hide = M.hide,
+    destroy = M.destroy,
   }
   return new_ui
 end
@@ -196,7 +198,7 @@ end
 
 ---@param ui ui
 M.destroy = function (ui)
-  ui:hide()
+  ui:detach()
   local preedit_buf = ui.preedit.buf
   if preedit_buf and vim_api.nvim_buf_is_valid(preedit_buf) then
     vim_api.nvim_buf_del_extmark(preedit_buf, M.ns_id, 1)
