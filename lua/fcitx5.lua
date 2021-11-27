@@ -1,4 +1,5 @@
 local M = {}
+你好，世界
 local vim_api = vim.api
 local glib = require'lgi'.GLib
 local ctx = glib.MainLoop():get_context()
