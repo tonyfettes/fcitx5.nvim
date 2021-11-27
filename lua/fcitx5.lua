@@ -1,93 +1,96 @@
 local M = {}
-local loop = vim.loop;
-local vim_api = vim.api;
+local vim_api = vim.api
 local glib = require'lgi'.GLib
 local ctx = glib.MainLoop():get_context()
 
 local dbus = require'fcitx5.dbus'
 local ui = require'fcitx5.ui'
 
-local cursorpos = nil
-
-local function update_ui(_, preedits, cursorpos_in, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next)
-  if vim.fn.mode() == 'i' then
-    for i, candidate in ipairs(candidates) do
-      candidates[i] = table.concat(candidate, ": ")
-    end
-    local candidates_string = table.concat(candidates, ", ")
-    -- print("candidates: " .. candidates_string)
-
-    -- print("preedits: " .. vim.inspect(preedits))
-    for i, preedit in ipairs(preedits) do
-      preedits[i] = preedit[1]
-    end
-    local preedit_string = table.concat(preedits, " ")
-
-    -- print("cursorpos: " .. vim.inspect(cursorpos))
-    cursorpos = cursorpos_in
-    print("cursorpos: " .. vim.inspect(cursorpos))
-    ui.update(preedit_string, cursorpos, candidates_string)
-  end
-end
+M.ns_id = nil
+M.ui = nil
+M.initialized = false
 
 M.display = function ()
-  ui.show()
+  if M.initialized == false then
+    M.init()
+  end
+  M.ui:attach(vim_api.nvim_get_current_win())
 end
 
 M.clear = function ()
-  dbus.reset()
-  ui.hide()
+  dbus.focus_out()
+  M.ui:hide()
 end
 
-local function commit_cb(_, commit_string)
-  ui.commit(commit_string)
-end
+local keys = {}
 
-M.process_key = function (char)
-  print("char: " .. char)
-  local is_accepted = dbus.send_key(char)
+---@param byte number
+M.process_key = function (byte)
+  table.insert(keys, byte)
+  -- print("keys: " .. vim.inspect(keys))
+  local is_accepted = dbus.send_key(byte)
   ctx:iteration(true)
-  vim.v.char = ''
+  if is_accepted then
+    vim.v.char = ''
+  end
 end
 
-M.cursor_moved = function ()
-  local current_pos = vim_api.nvim_win_get_cursor(0)[2] - 1
-  local delta = current_pos - cursorpos
-  if delta > 0 then
-    for _ = 1, delta, 1 do
+M.move_cursor = function ()
+  local d_line, d_cursor, d_length = M.ui:move_cursor()
+  -- M.process_key(0xff08)
+  -- M.process_key(0xff53)
+  if d_line > 0 then
+    -- Enter
+    M.process_key(0xff0d)
+  elseif d_cursor > 0 then
+    -- Right
+    for _ = 1, d_cursor, 1 do
       M.process_key(0xff53)
     end
-  else
-    for _ = 1, delta, -1 do
+  elseif d_cursor < 0 then
+    -- Delete
+    for _ = -1, d_length, -1 do
+      M.process_key(0xff08)
+    end
+    -- Left
+    for _ = -1, d_cursor - d_length, -1 do
       M.process_key(0xff51)
     end
   end
 end
 
 M.destroy = function ()
+  ui:destroy()
   dbus.disconnect()
 end
 
 M.init = function ()
-  local ns_id = vim_api.nvim_create_namespace("fcitx5.lua")
-  ui.set_namespace(ns_id)
-  dbus.connect()
-  dbus.set_commit_cb(commit_cb)
-  dbus.set_update_ui_cb(update_ui)
-  dbus.focus_in()
-  dbus.set_im('rime')
+  if M.initialized == false then
+    M.ns_id = vim_api.nvim_create_namespace("fcitx5.nvim")
+    M.ui = ui.new(M.ns_id)
+    dbus.connect()
+    dbus.set_commit_cb(function (_, commit_string)
+        M.ui:commit(commit_string)
+    end)
+    dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next)
+      if vim.fn.mode() == 'i' then
+        M.ui:update(preedits, cursor, candidates)
+      end
+    end)
+    dbus.focus_in()
+    dbus.set_im('rime')
+    vim.cmd[[
+      augroup fcitx5_hook
+        au!
+        autocmd InsertEnter * lua require'fcitx5'.display()
+        autocmd InsertCharPre * lua require'fcitx5'.process_key(string.byte(vim.v.char))
+        autocmd InsertLeave * lua require'fcitx5'.clear()
+        autocmd VimLeave * lua require'fcitx5'.destroy()
+        autocmd User InsertBs lua require'fcitx5'.backspace()
+      augroup END
+    ]]
+    M.initialized = true
+  end
 end
-
-vim.cmd[[
-augroup fcitx5_hook
-  au!
-  autocmd InsertEnter * lua require'fcitx5'.display()
-  autocmd InsertCharPre * lua require'fcitx5'.process_key(vim.v.char)
-  autocmd InsertLeave * lua require'fcitx5'.clear()
-  autocmd VimLeave * lua require'fcitx5'.destroy()
-augroup END
-]]
-
-M.init()
 
 return M

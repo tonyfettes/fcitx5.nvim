@@ -63,6 +63,7 @@ M.focus_in = function ()
   ic:FocusIn()
 end
 
+---@param target_im string
 M.set_im = function (target_im)
   ctrl:SetCurrentIM(target_im)
 end
@@ -71,8 +72,9 @@ M.focus_out = function ()
   ic:FocusOut()
 end
 
+---@param char string
 M.send_key = function (char)
-  local ok, err = ic:ProcessKeyEvent(string.byte(char), 0, 0, false, 0)
+  local ok, err = ic:ProcessKeyEvent(char, 0, 0, false, 0)
   if is_err(ok, err) then
     print("Error: " .. vim.inspect(err))
   else
@@ -88,10 +90,12 @@ M.disconnect = function ()
   ic:DestroyIC()
 end
 
+---@param cb function
 M.set_commit_cb = function (cb)
   ic:connect_signal(cb, "CommitString")
 end
 
+---@param cb function
 M.set_update_ui_cb = function (cb)
   -- proxy, preedit, cursorpos, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next
   ic:connect_signal(cb, "UpdateClientSideUI")

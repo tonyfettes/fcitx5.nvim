@@ -1,56 +1,134 @@
 local M = {}
 local vim_api = vim.api
 
-local ns_id = nil
--- local ext_id = nil
+-- local preedit_buf = nil
+-- local preedit_win = nil
+-- local input_win = nil
+-- local input_pos = nil
+-- local input_buf = nil
 
-M.set_namespace = function (ns_id_in)
-  ns_id = ns_id_in
+---@class ui.input
+---@field win number
+---@field buf number
+---@field cursor number[]
+
+---@class ui.preedit
+---@field win number
+---@field buf number
+---@field cursor number
+---@field length number
+
+---@class ui
+---@field ns_id number
+---@field ext_id number | nil
+---@field cursor_lock boolean
+---@field input ui.input
+---@field preedit ui.preedit
+---@field attach function
+---@field detach function
+---@field update function
+---@field commit function
+---@field move_cursor function
+---@field hide function
+
+---Creates a new ui
+---@param ns_id number
+---@return ui
+M.new = function (ns_id)
+  ---@type ui
+  local new_ui = {
+    ns_id = ns_id,
+    input = nil,
+    preedit = nil,
+    attach = M.attach,
+    detach = M.detach,
+    update = M.update,
+    commit = M.commit,
+    move_cursor = M.move_cursor,
+    hide = M.hide,
+  }
+  return new_ui
 end
 
-local preedit_buf = nil
-local preedit_win = nil
-local input_win = nil
-local input_pos = nil
-local input_buf = nil
-
-M.show = function ()
-  input_win = vim_api.nvim_get_current_win()
-  input_pos = vim_api.nvim_win_get_cursor(input_win)
-  input_pos[1] = input_pos[1] - 1
-  print("input_pos: " .. vim.inspect(input_pos))
-  input_buf = vim_api.nvim_win_get_buf(input_win)
-  if preedit_buf == nil then
-    preedit_buf = vim_api.nvim_create_buf(false, true)
-    vim_api.nvim_buf_set_name(preedit_buf, 'fcitx5-preedit')
-    vim.cmd[[
-    augroup fcitx5_preedit_cursor_move
-      au!
-      autocmd CursorMovedI <buffer> require'fcitx5'.cursor_moved()
-    augroup END
-    ]]
+---Set attach information of ui
+---@param ui ui
+---@param win number
+M.attach = function (ui, win)
+  assert(win)
+  ui.input = ui.input or {}
+  if win == 0 then
+    ui.input.win = vim_api.nvim_get_current_win()
+  else
+    ui.input.win = win
   end
-  preedit_win = nil
+  ui.input.buf = vim_api.nvim_win_get_buf(win)
+  ui.input.cursor = vim_api.nvim_win_get_cursor(ui.input.win)
+  ui.preedit = ui.preedit or {}
+  ui.preedit.win = nil
+  ui.preedit.buf = ui.preedit.buf or nil
+  ui.preedit.cursor = 0
 end
 
-local preedit = nil
-local cursorpos = 0
-local candidates = nil
+---@param ui ui
+M.detach = function (ui)
+  ui:hide()
+  ui.input = {}
+end
 
-M.update = function (preedit_in, cursorpos_in, candidates_in)
-  preedit = preedit_in
-  cursorpos = cursorpos_in
-  candidates = candidates_in
+local preedits_history = {}
+
+---Update ui
+---@param ui ui
+---@param preedits string[]
+---@param cursor number
+---@param candidates string[]
+M.update = function (ui, preedits, cursor, candidates)
+  for i, preedit in ipairs(preedits) do
+    preedits[i] = preedit[1]
+  end
+  local preedit_string = table.concat(preedits, "")
+  for i, candidate in ipairs(candidates) do
+    candidates[i] = table.concat(candidate, ": ")
+  end
+  local candidates_string = table.concat(candidates, ", ")
+  table.insert(preedits_history, preedit_string)
+  print("preedits history: " .. vim.inspect(preedits_history))
+  -- print("preedit: " .. preedit_string .. ", cursor: " .. cursor)
   vim.schedule(function ()
-    vim_api.nvim_buf_set_lines(preedit_buf, 0, -1, true, {preedit, candidates})
-    if #preedit ~= 0 then
-      local strwidth = vim.fn.strwidth
-      local win_width = math.max(strwidth(preedit), strwidth(candidates), 3)
-      if preedit_win == nil then
+    -- If buf is absent, new one
+    if ui.preedit.buf == nil then
+      ui.preedit.buf = vim_api.nvim_create_buf(false, true)
+      vim_api.nvim_buf_set_name(ui.preedit.buf, 'fcitx5-preedit')
+      vim.cmd([[
+        augroup fcitx5_preedit_cursor_moved_i
+          au!
+          autocmd CursorMovedI <buffer=]] .. ui.preedit.buf .. [[> lua require'fcitx5'.move_cursor()
+        augroup END
+      ]])
+    end
+    local preedit_buf = ui.preedit.buf
+
+    -- Set content of buffer
+    vim_api.nvim_buf_set_lines(preedit_buf, 0, -1, true, {preedit_string})
+    ui.preedit.length = #preedit_string
+    vim_api.nvim_buf_set_extmark(preedit_buf, ui.ns_id, 0, 0, {
+      id = 1,
+      virt_lines = {{{ candidates_string, "Normal" }}},
+    })
+
+    -- Calculate window width
+    -- TODO: strwidth/strdisplaywidth
+    local strwidth = vim.fn.strwidth
+    local win_width = math.max(strwidth(preedit_string), strwidth(candidates_string))
+
+    -- If needs to be displayed
+    if win_width ~= 0 then
+
+      win_width = math.max(win_width, 3)
+
+      -- Set window width
+      if ui.preedit.win == nil then
         local win_config = {
-          -- relative = 'win',
-          -- win = input_win,
-          -- bufpos = input_pos,
           relative = 'cursor',
           row = 0,
           col = 0,
@@ -58,71 +136,79 @@ M.update = function (preedit_in, cursorpos_in, candidates_in)
           height = 2,
           style = 'minimal'
         }
-        vim_api.nvim_win_call(input_win, function ()
-          preedit_win = vim_api.nvim_open_win(preedit_buf, true, win_config)
-          vim_api.nvim_buf_set_lines(preedit_buf, 0, -1, true, {preedit, candidates})
+        vim_api.nvim_win_call(ui.input.win, function ()
+          ui.preedit.win = vim_api.nvim_open_win(preedit_buf, true, win_config)
         end)
       else
-        vim_api.nvim_win_set_width(preedit_win, win_width)
-        vim_api.nvim_set_current_win(preedit_win)
+        vim_api.nvim_win_set_width(ui.preedit.win, win_width)
+        vim_api.nvim_set_current_win(ui.preedit.win)
       end
-      -- print("cursorpos: " .. vim.inspect(cursorpos))
-      vim_api.nvim_win_set_cursor(preedit_win, { 1, cursorpos + 1 })
+      -- Set cursor position
+      print("cursor: " .. vim.inspect(cursor))
+      ui.cursor_lock = true
+      vim_api.nvim_win_set_cursor(ui.preedit.win, { 1, cursor })
+      ui.preedit.cursor = cursor
     else
-      M.hide()
+      ui:hide()
     end
   end)
 end
 
-local commit_string = ''
+---@param ui ui
+---@return number, number, number
+M.move_cursor = function (ui)
+  if ui.cursor_lock == true then
+    -- Cancel CursorMovedI introduced by setting preedit
+    ui.cursor_lock = false
+    return 0, 0, 0
+  else
+    local length = vim_api.nvim_get_current_line()
+    local d_preedit_length = #length - ui.preedit.length
+    ui.preedit.length = length
 
-M.commit = function (commit_string_in)
-  commit_string = commit_string_in
+    local line, cursor = unpack(vim_api.nvim_win_get_cursor(ui.preedit.win))
+    local d_line = line - 1
+    local d_cursor = cursor - ui.preedit.cursor
+    -- print("prv: " .. ui.preedit.cursor .. ", cur: " .. cursor .. ", delta: " .. delta)
+    ui.preedit.cursor = cursor
+    return d_line, d_cursor, d_preedit_length
+  end
+end
+
+---Commit string to ui
+---@param ui ui
+---@param commit_string string
+M.commit = function (ui, commit_string)
   vim.schedule(function ()
-    local lno, cno = unpack(input_pos)
-    -- print("input_pos: " .. vim.inspect(input_pos))
-    print("commit_string: " .. commit_string)
-    vim_api.nvim_buf_set_text(input_buf, lno, cno, lno, cno, {commit_string})
-    input_pos[2] = input_pos[2] + #commit_string
-    vim_api.nvim_win_set_cursor(input_win, {input_pos[1] + 1, input_pos[2]})
-    print("curpos: " .. vim.inspect(vim_api.nvim_win_get_cursor(0)))
-    M.hide()
+    local input = ui.input
+    local lno, cno = unpack(vim_api.nvim_win_get_cursor(input.win))
+    lno = lno - 1
+    -- print("commit_string: " .. commit_string)
+    vim_api.nvim_buf_set_text(input.buf, lno, cno, lno, cno, {commit_string})
+    vim_api.nvim_win_set_cursor(input.win, {lno + 1, cno + #commit_string})
+    -- print("curpos: " .. vim.inspect(vim_api.nvim_win_get_cursor(0)))
+    ui:hide()
   end)
 end
 
-M.hide = function ()
-  -- if ns_id and ext_id and preedit_buf then
-  --   vim_api.nvim_buf_del_extmark(preedit_buf, ns_id, ext_id)
-  -- end
+---Hide ui
+---@param ui ui
+M.hide = function (ui)
+  local preedit_win = ui.preedit.win
   if preedit_win ~= nil and vim_api.nvim_win_is_valid(preedit_win) then
     vim_api.nvim_win_hide(preedit_win)
-    preedit_win = nil
+    ui.preedit.win = nil
   end
-
-  -- if preedit_win ~= nil and vim_api.nvim_win_is_valid(preedit_win) then
-  --   vim_api.nvim_win_close(preedit_win, true)
-  --   preedit_win = nil
-  -- end
 end
 
-M.clear = function ()
+---@param ui ui
+M.destroy = function (ui)
+  ui:hide()
+  local preedit_buf = ui.preedit.buf
+  if preedit_buf and vim_api.nvim_buf_is_valid(preedit_buf) then
+    vim_api.nvim_buf_del_extmark(preedit_buf, M.ns_id, 1)
+    vim_api.nvim_buf_detach(preedit_buf)
+  end
 end
-
--- local buf = nvim.nvim_create_buf(false, true)
--- local win = nvim.nvim_open_win(buf, false, {
---   relative = 'cursor',
---   width = 10,
---   height = 1,
---   row = 1,
---   col = 0,
---   focusable = false,
---   style = 'minimal',
--- })
--- nvim.nvim_buf_set_lines(buf, 0, 1, false, {tostring(win)})
--- print(win)
-
--- local lno = 5
--- local cno = 5
--- local mark_id = vim.api.nvim_buf_set_extmark(bnr, ns_id, lno - 1, cno, opts)
 
 return M
