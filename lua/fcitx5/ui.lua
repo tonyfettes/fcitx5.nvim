@@ -1,12 +1,6 @@
 local M = {}
 local vim_api = vim.api
 
--- local preedit_buf = nil
--- local preedit_win = nil
--- local input_win = nil
--- local input_pos = nil
--- local input_buf = nil
-
 ---@class ui.input
 ---@field win number
 ---@field buf number
@@ -75,8 +69,6 @@ M.detach = function (ui)
   ui.input = {}
 end
 
-local preedits_history = {}
-
 ---Update ui
 ---@param ui ui
 ---@param preedits string[]
@@ -91,8 +83,6 @@ M.update = function (ui, preedits, cursor, candidates)
     candidates[i] = table.concat(candidate, ": ")
   end
   local candidates_string = table.concat(candidates, ", ")
-  table.insert(preedits_history, preedit_string)
-  print("preedits history: " .. vim.inspect(preedits_history))
   -- print("preedit: " .. preedit_string .. ", cursor: " .. cursor)
   vim.schedule(function ()
     -- If buf is absent, new one
@@ -144,7 +134,7 @@ M.update = function (ui, preedits, cursor, candidates)
         vim_api.nvim_set_current_win(ui.preedit.win)
       end
       -- Set cursor position
-      print("cursor: " .. vim.inspect(cursor))
+      -- print("cursor: " .. vim.inspect(cursor))
       ui.cursor_lock = true
       vim_api.nvim_win_set_cursor(ui.preedit.win, { 1, cursor })
       ui.preedit.cursor = cursor
@@ -196,6 +186,9 @@ end
 M.hide = function (ui)
   local preedit_win = ui.preedit.win
   if preedit_win ~= nil and vim_api.nvim_win_is_valid(preedit_win) then
+    -- if ui.preedit.length ~= 0 then
+    --   ui:commit(vim_api.nvim_buf_get_lines(ui.preedit.buf, 0, 1, true)[1])
+    -- end
     vim_api.nvim_win_hide(preedit_win)
     ui.preedit.win = nil
   end

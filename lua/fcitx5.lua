@@ -1,5 +1,4 @@
 local M = {}
-你好，世界
 local vim_api = vim.api
 local glib = require'lgi'.GLib
 local ctx = glib.MainLoop():get_context()
@@ -19,8 +18,8 @@ M.display = function ()
 end
 
 M.clear = function ()
-  dbus.focus_out()
   M.ui:hide()
+  dbus.focus_out()
 end
 
 local keys = {}
