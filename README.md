@@ -20,9 +20,10 @@ use {
 ## Roadmap
 
 - [x] Fix error on exit
-- [ ] Switchable input method and group (currently hardcoded to 'rime')
+- [x] Switchable input method and group (currently hardcoded to 'rime')
+- [ ] Show current input method and input group
 - [ ] Highlight
-- [ ] UI glitch on first keystroke after insert
+- [x] UI glitch on first keystroke after insert
 - [ ] Command-line support
 - [ ] Horizontal/Vertical layout
 - [ ] Candidate list margin
