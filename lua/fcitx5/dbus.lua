@@ -10,12 +10,13 @@ local ic = nil
 local im = nil
 local ctrl = nil
 
-local function is_err(ok, err)
-  if ok == nil and err ~= nil then
-    return true
-  else
-    return false
-  end
+local function assert_result(ok, err)
+  assert(ok ~= nil, tostring(err))
+end
+
+local function ensure_result(ok, err)
+  assert(err == nil, tostring(err))
+  return ok
 end
 
 M.connect = function ()
@@ -59,8 +60,16 @@ M.connect = function ()
   end
 end
 
+M.toggle = function ()
+  ctrl:Toggle()
+end
+
 M.focus_in = function ()
   ic:FocusIn()
+end
+
+M.focus_out = function ()
+  ic:FocusOut()
 end
 
 ---@param target_im string
@@ -68,18 +77,59 @@ M.set_im = function (target_im)
   ctrl:SetCurrentIM(target_im)
 end
 
-M.focus_out = function ()
-  ic:FocusOut()
+---@return string
+M.get_im = function ()
+  return ensure_result(ctrl:CurrentInputMethod())
+end
+
+---@return string
+M.get_ig = function ()
+  return ensure_result(ctrl:CurrentInputMethodGroup())
+end
+
+---@return string[]
+M.get_ig_list = function ()
+  return ensure_result(ctrl:InputMethodGroups())
+end
+
+---@class ig_info
+---@field current number
+---@field layout string
+---@field im_list string[][]
+
+---@param ig string
+---@return ig_info
+M.get_ig_info = function (ig)
+  local layout, im_list = unpack(ensure_result(ctrl:InputMethodGroupInfo(ig)))
+  -- print("ig: " .. vim.inspect(ret))
+  local current_im = M.get_im()
+  local current = 0
+  for index, im_info in ipairs(im_list) do
+    if im_info[1] == current_im then
+      current = index
+    end
+  end
+  return {
+    current = current,
+    layout = layout,
+    im_list = im_list
+  }
+end
+
+---@param cb function
+M.set_ig_update_cb = function (cb)
+  ctrl:connect_signal(cb, "InputMethodGroupsChanged")
+end
+
+---@param name string
+M.set_ig = function (name)
+  ensure_result(ctrl:SwitchInputMethodGroup(name))
 end
 
 ---@param char string
+---@return boolean
 M.send_key = function (char)
-  local ok, err = ic:ProcessKeyEvent(char, 0, 0, false, 0)
-  if is_err(ok, err) then
-    print("Error: " .. vim.inspect(err))
-  else
-    return ok
-  end
+  return ensure_result(ic:ProcessKeyEvent(char, 0, 0, false, 0))
 end
 
 M.reset = function ()
