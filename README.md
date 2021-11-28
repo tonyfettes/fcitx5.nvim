@@ -8,8 +8,7 @@
 
 ## Install
 
-packer.nvim
-
+If you use `packer.nvim`,
 ```lua
 use {
   'tonyfettes/fcitx5.nvim'
@@ -20,7 +19,6 @@ use {
 ## Setup
 
 The example below shows the default values.
-
 ```vim
 " setup() can be called before/after the loading of fcitx5.nvim
 lua<<EOF
@@ -47,8 +45,7 @@ hi! link Fcitx5PreeditItalic Italic
 
 ```vim
 " Map Shift+Tab to toggle the most recent two input methods.
-" Function toggle() must be called after init().
-inoremap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>
+imap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>
 ```
 
 ## Roadmap
