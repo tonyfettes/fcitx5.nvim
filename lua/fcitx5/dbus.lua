@@ -132,6 +132,11 @@ M.send_key = function (char)
   return ensure_result(ic:ProcessKeyEvent(char, 0, 0, false, 0))
 end
 
+---@param index number
+M.select_candidate = function (index)
+  ensure_result(ic:SelectCandidate(index))
+end
+
 M.reset = function ()
   ic:Reset()
 end

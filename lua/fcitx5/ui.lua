@@ -16,6 +16,10 @@ local vim_api = vim.api
 ---@field win number
 ---@field buf number
 
+---@class ui.padding
+---@field left string
+---@field right string
+
 ---@class ui
 ---@field ns_id number
 ---@field ext_id number | nil
@@ -23,6 +27,8 @@ local vim_api = vim.api
 ---@field input ui.input
 ---@field preedit ui.preedit
 ---@field candidates ui.candidates
+---@field separator string
+---@field padding ui.padding
 ---@field attach function
 ---@field detach function
 ---@field destroy function
@@ -31,15 +37,29 @@ local vim_api = vim.api
 ---@field move_cursor function
 ---@field hide function
 
+
+---@class ui.config.padding
+---@field left number
+---@field right number
+
+---@class ui.config
+---@field separator string
+---@field padding ui.config.padding
+--
 ---Creates a new ui
 ---@param ns_id number
 ---@return ui
-M.new = function (ns_id)
+M.new = function (ns_id, config)
   ---@type ui
   local new_ui = {
     ns_id = ns_id,
     input = {},
     preedit = {},
+    separator = config.separator,
+    padding = {
+      left = string.rep(' ', config.padding.left),
+      right = string.rep(' ', config.padding.right)
+    },
     attach = M.attach,
     detach = M.detach,
     update = M.update,
@@ -54,7 +74,7 @@ end
 ---Set attach information of ui
 ---@param ui ui
 ---@param win number
-M.attach = function (ui, win)
+M.attach = function (ui, win, config)
   assert(win)
   ui.input = ui.input or {}
   if win == 0 then
@@ -88,16 +108,28 @@ end
 ---@param preedits string[]
 ---@param cursor number
 ---@param candidates string[]
-M.update = function (ui, preedits, cursor, candidates)
+M.update = function (ui, preedits, cursor, candidates, candidate_index)
   for i, preedit in ipairs(preedits) do
     preedits[i] = preedit[1]
   end
   local preedit_string = table.concat(preedits, "")
+
+  local candidate_sel_hl_start = 0
+  local candidate_sel_hl_end = 0
+  local candidates_width = 0
+  local padding_width = #ui.padding.left + #ui.padding.right
   for i, candidate in ipairs(candidates) do
-    candidates[i] = table.concat(candidate, ": ")
+    candidates[i] = table.concat(candidate)
+    if i == candidate_index + 1 then
+      candidate_sel_hl_start = candidates_width
+      candidate_sel_hl_end = candidate_sel_hl_start + #candidates[i] + padding_width
+    else
+      candidates_width = candidates_width + #candidates[i] + padding_width
+    end
   end
-  local candidates_string = table.concat(candidates, ", ")
-  -- print("preedit: " .. preedit_string .. ", cursor: " .. cursor)
+  local sep_padded = ui.padding.left .. ui.separator .. ui.padding.right
+  local candidates_string = ui.padding.left .. table.concat(candidates, sep_padded) .. ui.padding.right
+
   vim.schedule(function ()
     -- If buf is absent, new one
     if ui.preedit.buf == nil then
@@ -124,17 +156,14 @@ M.update = function (ui, preedits, cursor, candidates)
     vim_api.nvim_buf_set_lines(preedit_buf, 0, -1, true, {preedit_string})
     ui.preedit.length = #preedit_string
     -- print("candidates: " .. candidates_string)
-    vim_api.nvim_buf_set_extmark(candidates_buf, ui.ns_id, 0, 0, {
-      id = 1,
-      virt_text = {{ candidates_string, "None" }},
-      virt_text_pos = 'overlay'
-    })
+    vim_api.nvim_buf_set_lines(candidates_buf, 0, -1, true, {candidates_string})
+    vim_api.nvim_buf_add_highlight(candidates_buf, ui.ns_id, 'Fcitx5CandidateNormal', 0, 0, #candidates_string)
+    vim_api.nvim_buf_add_highlight(candidates_buf, ui.ns_id, 'Fcitx5CandidateSelected', 0, candidate_sel_hl_start, candidate_sel_hl_end)
 
     -- Calculate window width
     -- TODO: strwidth/strdisplaywidth
     local strwidth = vim.fn.strwidth
     local preedit_width = strwidth(preedit_string)
-    local candidates_width = strwidth(candidates_string)
     print("preedit_width: " .. preedit_width)
 
     -- Displays preedit window

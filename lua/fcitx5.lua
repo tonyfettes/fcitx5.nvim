@@ -11,15 +11,26 @@ M.attached = false
 
 M.init = function ()
   if M.initialized == false then
+    vim.cmd[[
+      hi! link Fcitx5CandidateNormal None
+      hi! link Fcitx5CandidateSelected Search
+    ]]
     local ns_id = vim_api.nvim_create_namespace('fcitx5.nvim')
-    local c_ui = ui.new(ns_id)
+    local c_ui = ui.new(ns_id, {
+      separator = '',
+      padding = {
+        left = 1,
+        right = 1,
+      }
+    })
     dbus.connect()
     dbus.set_commit_cb(function (_, commit_string)
       c_ui:commit(commit_string)
     end)
     dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next)
       if vim.fn.mode() == 'i' then
-        c_ui:update(preedits, cursor, candidates)
+        M.candidate_index = candidate_index
+        c_ui:update(preedits, cursor, candidates, candidate_index)
       end
     end)
 
@@ -109,6 +120,19 @@ M.init = function ()
         c_ui:attach(vim_api.nvim_get_current_win())
         M.process_key = process_key
         M.move_cursor = move_cursor
+
+        M.candidate_index = 0
+        ---@param forward boolean
+        M.enum_candidate = function (forward)
+          local candidate_index = M.candidate_index
+          if forward then
+            candidate_index = candidate_index + 1
+          else
+            candidate_index = candidate_index - 1
+          end
+          dbus.select_candidate(candidate_index)
+        end
+
         vim.cmd[[
           augroup fcitx5_trigger
             au!
@@ -125,6 +149,8 @@ M.init = function ()
         c_ui:detach()
         M.process_key = nil
         M.move_cursor = nil
+        M.candidate_index = nil
+        M.enum_candidate = nil
         vim.cmd[[
           augroup fcitx5_trigger
             au!
