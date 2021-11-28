@@ -1,4 +1,5 @@
 local M = {}
+
 local vim_api = vim.api
 local ctx = require'lgi'.GLib.MainLoop():get_context()
 
@@ -34,7 +35,7 @@ dbus.set_commit_cb(function (_, commit_string)
   c_ui:commit(commit_string)
 end)
 dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next)
-  if vim_api.nvim_get_mode().mode == 'i' then
+  if string.match(vim_api.nvim_get_mode().mode, 'i') ~= nil then
     M.ui_info = {
       preedits = preedits,
       cursor = cursor,
@@ -224,7 +225,7 @@ vim.cmd[[
 ]]
 
 -- If user is current in insert mode, attach to current buffer immediately
-if vim_api.nvim_get_mode().mode == 'i' then
+if string.match(vim_api.nvim_get_mode().mode, 'i') ~= nil then
   M.attach()
 end
 

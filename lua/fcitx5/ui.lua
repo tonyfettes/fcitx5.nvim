@@ -195,7 +195,8 @@ local function open_preedit_win(ui, win_width, cursor)
       col = 0,
       width = win_width,
       height = 1,
-      style = 'minimal'
+      style = 'minimal',
+      zindex = 300,
     }
     vim_api.nvim_win_call(ui.input.win, function ()
       ui.preedit.win = vim_api.nvim_open_win(ui.preedit.buf, false, win_config)
@@ -225,7 +226,8 @@ local function open_candidates_win(ui, win_width)
       col = 0,
       width = win_width,
       height = 1,
-      style = 'minimal'
+      style = 'minimal',
+      zindex = 300,
     }
     vim_api.nvim_win_call(ui.input.win, function ()
       ui.candidates.win = vim_api.nvim_open_win(ui.candidates.buf, false, win_config)
