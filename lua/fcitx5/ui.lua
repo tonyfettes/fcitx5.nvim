@@ -253,7 +253,7 @@ M.update = function (ui, preedits, cursor, candidates, candidate_index)
     vim_api.nvim_buf_set_lines(preedit_buf, 0, -1, true, {preedit_string})
     ui.preedit.length = #preedit_string
     for i, hl in ipairs(preedit_hl) do
-      print("hl: " .. hl)
+      -- print("hl: " .. hl)
       if bit.band(hl, 8) ~= 0 then
         vim_api.nvim_buf_add_highlight(preedit_buf, ui.ns_id, 'Fcitx5PreeditUnderline', 0, preedit_sep_loc[i], preedit_sep_loc[i + 1])
       end
