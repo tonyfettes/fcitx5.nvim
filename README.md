@@ -21,8 +21,8 @@ use {
 
 The example below shows the default values.
 
-```vimscript
-# setup() can be called before/after the loading of fcitx5.nvim
+```vim
+" setup() can be called before/after the loading of fcitx5.nvim
 lua<<EOF
 require'fcitx5'.setup = {
   ui = {
@@ -45,9 +45,9 @@ hi! link Fcitx5PreeditItalic Italic
 
 ## Example Usage
 
-```vimscript
-# Map Shift+Tab to toggle the most recent two input methods.
-# Function toggle() must be called after init().
+```vim
+" Map Shift+Tab to toggle the most recent two input methods.
+" Function toggle() must be called after init().
 inoremap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>
 ```
 
