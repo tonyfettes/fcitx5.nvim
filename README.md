@@ -40,11 +40,20 @@ hi Fcitx5PreeditStrike gui=strikethrough
 hi! link Fcitx5PreeditItalic Italic
 ```
 
-## Example Usage
+## Quick Start
 
 ```vim
-" Map Shift+Tab to toggle the most recent two input methods.
-imap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>
+use {
+  'tonyfettes/fcitx5.nvim',
+  config = {
+    -- Load `fcitx5.nvim`
+    require'fcitx5'.setup {}
+    -- Map <M-Tab> to toggle between most recent two input methods.
+    vim.cmd[[inoremap <M-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>]]
+  },
+  -- Add luarocks dependencies
+  rocks = { 'lgi', 'dbus_proxy' }
+}
 ```
 
 ## Roadmap
@@ -62,4 +71,4 @@ imap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>
 - [ ] Commit when focus out
 - [ ] \(Perhaps\) `CursorMovedI/InsertCharPre` to `nvim_buf_attach()`
 - [ ] \(Perhaps\) Show current input method and input group using dedicated window
-- [ ] <del>If `'wrap'` is not set, scroll horizontal if pre-edit is too long, otherwise move to next line.</dev> Too hard.
+- [ ] <del>If `'wrap'` is not set, scroll horizontal if pre-edit is too long, otherwise move to next line.</del> Too hard.

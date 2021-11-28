@@ -1,24 +1,24 @@
-*fcitx5.txt*   A Fcitx5 client in Nvim
+*fcitx5.txt* A Fcitx5 client in Nvim
 *fcitx5.nvim* *fcitx5* *Fcitx5*
 
 Author: Tony Fettes <tonyfettes@tonyfettes.com>
 
 ==============================================================================
-CONTENTS
+CONTENTS						*fcitx5-contents*
 
-  Introduction |fcitx5-introduction|
-    Requirements |fcitx5-requirements|
-    Features |fcitx5-features|
-    Quickstart |fcitx5-quickstart|
-  Functions |fcitx5-functions|
+  Introduction						|fcitx5-introduction|
+    Requirements					|fcitx5-requirements|
+    Features						|fcitx5-features|
+    Quickstart						|fcitx5-quickstart|
+  Functions						|fcitx5-functions|
 
 ==============================================================================
-INTRODUCTION *fcitx5-introduction*
+INTRODUCTION						*fcitx5-introduction*
 
 This is a Fcitx5 client in Neovim. It utilize DBus to communicate with Fcitx5.
 
------------------------------------------------------------------------------
-REQUIREMENTS *fcitx5-requirements*
+------------------------------------------------------------------------------
+REQUIREMENTS						*fcitx5-requirements*
 
 - This plugin is written on, and tested only on Neovim v0.6.0.
 - You need to have luarocks `dbus_proxy` and `lgi` installed. This can be done
@@ -27,7 +27,7 @@ REQUIREMENTS *fcitx5-requirements*
   operating system.
 
 -----------------------------------------------------------------------------
-FEATURES *fcitx5-features*
+FEATURES						*fcitx5-features*
 
 - Toggle, enumeration between input methods and input method groups
 - Will not modify current buffer until a commit is made.
@@ -35,7 +35,7 @@ FEATURES *fcitx5-features*
 - Will not trigger input method in normal mode
 
 -----------------------------------------------------------------------------
-QUICKSTART *fcitx5-quickstart*
+QUICKSTART						*fcitx5-quickstart*
 
 If you have `packer.nvim` installed, you could use following code to load
 `fcitx5.nvim`:
@@ -54,51 +54,58 @@ If you have `packer.nvim` installed, you could use following code to load
 <
 
 ==============================================================================
-FUNCTIONS *fcitx5-functions*
+FUNCTIONS						*fcitx5-functions*
 
 `fcitx5.nvim` provides following Lua functions
 
-setup({config_in}) *fcitx5.setup()*
-  Configures `fcitx5.nvim`.
+setup({config_in})					*fcitx5.setup()*
+	Configures `fcitx5.nvim`.
 
-  Parameters: ~
-    {config_in} Configuration
-                  - ui: table: UI Specification
-                    - separator: string. Separator between candidate words
-                    - padding: table: Padding of candidate word
-                      - left: integer greater than 0. Left Padding
-                      - right: integer greater than 0. Right Padding
+	Parameters: ~
+		{config_in}	Configuration
+				- ui: table: UI Specification
+				  - separator: string. Separator between
+				    candidate words
+				  - padding: table: Padding of candidate word
+				    - left: integer greater than 0. Left
+				      Padding
+				    - right: integer greater than 0. Right
+				      Padding
 
-toggle() *fcitx5.toggle()*
+toggle()						*fcitx5.toggle()*
 
-  Toggles between the most recent two input methods
+	Toggles between the most recent two input methods
 
-enum_im({forward}) *fcitx5.enum_im()*
-  Enumerates input methods.
+enum_im({forward})					*fcitx5.enum_im()*
+	Enumerates input methods.
 
-  Parameters: ~
-    {forward} A boolean. Set true to enumerate forwards, false to backwards.
+	Parameters: ~
+		{forward}	A boolean. Set true to enumerate forwards,
+				false to backwards.
 
-enum_im({forward}) *fcitx5.enum_im()*
-  Enumerates input method groups.
+enum_im({forward})					*fcitx5.enum_im()*
+	Enumerates input method groups.
 
-  Parameters: ~
-    {forward} A boolean. Set true to enumerate forwards, false to backwards.
+	Parameters: ~
+		{forward}	A boolean. Set true to enumerate forwards,
+				false to backwards.
 
-attach() *fcitx5.attach()*
-  Attach to current buffer.
+attach()						*fcitx5.attach()*
+	Attach to current buffer.
 
-  Note: Calling this function will listen |InsertCharPre| on current buffer
+	Note: Calling this function will listen |InsertCharPre| on current buffer
 
-  See Also: ~
-    |fcitx5.detach()|
+	See Also: ~
+		  |fcitx5.detach()|
 
-detach() *fcitx5.detach()*
-  Detach from current buffer.
+detach()						*fcitx5.detach()*
+	Detach from current buffer.
 
-  See Also: ~
-    |fcitx5.attach()|
+	See Also: ~
+		  |fcitx5.attach()|
 
-destroy() *fcitx5.destroy()*
-  Destroy current input context from Fcitx5 and reset all provided function to
-  empty.
+destroy()						*fcitx5.destroy()*
+	Destroy current input context from Fcitx5 and reset all provided
+	function to empty.
+
+vim:tw=78:ts=8:ft=help:norl:
