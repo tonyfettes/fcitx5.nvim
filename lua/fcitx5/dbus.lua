@@ -1,18 +1,10 @@
 local M = {}
-local ffi = require'ffi'
-local lgi = require'lgi'
-local glib = lgi.GLib
-local gobj = lgi.GObject
 
 local p = require'dbus_proxy'
 
 local ic = nil
 local im = nil
 local ctrl = nil
-
-local function assert_result(ok, err)
-  assert(ok ~= nil, tostring(err))
-end
 
 local function ensure_result(ok, err)
   assert(err == nil, tostring(err))
@@ -101,7 +93,6 @@ end
 ---@return ig_info
 M.get_ig_info = function (ig)
   local layout, im_list = unpack(ensure_result(ctrl:InputMethodGroupInfo(ig)))
-  -- print("ig: " .. vim.inspect(ret))
   local current_im = M.get_im()
   local current = 0
   for index, im_info in ipairs(im_list) do

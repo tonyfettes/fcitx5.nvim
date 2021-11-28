@@ -79,11 +79,13 @@ end
 ---@param config ui.config
 M.config = function (ui, config)
   ui.separator = config.separator
-  ui.padding = {
-    left = string.rep(' ', config.padding.left),
-    right = string.rep(' ', config.padding.right),
-    width = config.padding.left + config.padding.right
-  }
+  if config.padding.left ~= #ui.padding.left then
+    ui.padding.left = string.rep(' ', config.padding.left)
+  end
+  if config.padding.right ~= #ui.padding.right then
+    ui.padding.right = string.rep(' ', config.padding.right)
+  end
+  ui.padding.width = config.padding.left + config.padding.right
 end
 
 ---Set attach information of ui
@@ -160,13 +162,15 @@ local function create_preedit_buf(ui)
   if ui.preedit.buf == nil then
     ui.preedit.buf = vim_api.nvim_create_buf(false, true)
     vim_api.nvim_buf_set_name(ui.preedit.buf, 'fcitx5-preedit')
-    vim.cmd([[
-    augroup fcitx5_preedit
-    au!
-    autocmd CursorMovedI <buffer=]] .. ui.preedit.buf .. [[> lua require'fcitx5'.move_cursor()
-    autocmd InsertCharPre <buffer=]] .. ui.preedit.buf .. [[> lua require'fcitx5'.process_key(string.byte(vim.v.char))
-    augroup END
-    ]])
+    vim_api.nvim_buf_call(ui.preedit.buf, function ()
+      vim.cmd([[
+        augroup fcitx5_preedit
+          au!
+          autocmd CursorMovedI <buffer> lua require'fcitx5'.move_cursor()
+          autocmd InsertCharPre <buffer> lua require'fcitx5'.process_key(string.byte(vim.v.char))
+        augroup END
+      ]])
+    end)
   end
   return ui.preedit.buf
 end
@@ -249,11 +253,9 @@ M.update = function (ui, preedits, cursor, candidates, candidate_index)
     local candidates_buf = create_candidates_buf(ui)
 
     -- Set content of buffer
-    -- print("preedit: " .. preedit_string)
     vim_api.nvim_buf_set_lines(preedit_buf, 0, -1, true, {preedit_string})
     ui.preedit.length = #preedit_string
     for i, hl in ipairs(preedit_hl) do
-      -- print("hl: " .. hl)
       if bit.band(hl, 8) ~= 0 then
         vim_api.nvim_buf_add_highlight(preedit_buf, ui.ns_id, 'Fcitx5PreeditUnderline', 0, preedit_sep_loc[i], preedit_sep_loc[i + 1])
       end
@@ -273,7 +275,7 @@ M.update = function (ui, preedits, cursor, candidates, candidate_index)
         vim_api.nvim_buf_add_highlight(preedit_buf, ui.ns_id, 'Fcitx5PreeditItalic', 0, preedit_sep_loc[i], preedit_sep_loc[i + 1])
       end
     end
-    -- print("candidates: " .. candidates_string)
+
     vim_api.nvim_buf_set_lines(candidates_buf, 0, -1, true, {candidates_string})
     vim_api.nvim_buf_add_highlight(candidates_buf, ui.ns_id, 'Fcitx5CandidateNormal', 0, 0, #candidates_string)
     if candidate_index >= 0 and candidate_index < #candidates then
@@ -317,7 +319,6 @@ M.move_cursor = function (ui)
     local line, cursor = unpack(vim_api.nvim_win_get_cursor(ui.preedit.win))
     local d_line = line - 1
     local d_cursor = cursor - ui.preedit.cursor
-    -- print("prv: " .. ui.preedit.cursor .. ", cur: " .. cursor .. ", delta: " .. delta)
     ui.preedit.cursor = cursor
     return d_line, d_cursor, d_preedit_length
   end
@@ -331,10 +332,8 @@ M.commit = function (ui, commit_string)
     local input = ui.input
     local lno, cno = unpack(vim_api.nvim_win_get_cursor(input.win))
     lno = lno - 1
-    -- print("commit_string: " .. commit_string)
     vim_api.nvim_buf_set_text(input.buf, lno, cno, lno, cno, {commit_string})
     vim_api.nvim_win_set_cursor(input.win, {lno + 1, cno + #commit_string})
-    -- print("curpos: " .. vim.inspect(vim_api.nvim_win_get_cursor(0)))
     ui:hide(ui.preedit)
     ui:hide(ui.candidates)
   end)
@@ -346,9 +345,6 @@ end
 M.hide = function (ui, widget)
   local win = widget.win
   if win ~= nil and vim_api.nvim_win_is_valid(win) then
-    -- if ui.preedit.length ~= 0 then
-    --   ui:commit(vim_api.nvim_buf_get_lines(ui.preedit.buf, 0, 1, true)[1])
-    -- end
     vim_api.nvim_win_hide(win)
     widget.win = nil
   end
@@ -359,9 +355,7 @@ M.destroy = function (ui)
   ui:detach()
   local candidates_buf = ui.preedit.buf
   if candidates_buf and vim_api.nvim_buf_is_valid(candidates_buf) then
-    -- print("del_extmark: arg: " .. candidates_buf .. ui.ns_id .. 1)
     vim_api.nvim_buf_del_extmark(candidates_buf, ui.ns_id, 1)
-    -- vim_api.nvim_buf_detach(preedit_buf)
   end
 end
 

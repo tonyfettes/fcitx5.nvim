@@ -54,13 +54,13 @@ imap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>
 - [x] Switchable input method and group (currently hardcoded to 'rime')
 - [x] Break into two windows for pre-edit and candidate list respectively
 - [x] Select candidates with function
-- [ ] If `'wrap'` is not set, scroll horizontal if pre-edit is too long, otherwise move to next line
-- [ ] Show current input method and input group using dedicated window
 - [x] Highlight
   - [x] Pre-edit highlight
 - [x] UI glitch on first keystroke after insert
-- [ ] Command-line support
+- [x] Candidate list margin
 - [ ] Horizontal/Vertical layout
-- [ ] Candidate list margin
+- [ ] Command-line support
 - [ ] Commit when focus out
 - [ ] \(Perhaps\) `CursorMovedI/InsertCharPre` to `nvim_buf_attach()`
+- [ ] \(Perhaps\) Show current input method and input group using dedicated window
+- [ ] <del>If `'wrap'` is not set, scroll horizontal if pre-edit is too long, otherwise move to next line.</dev> Too hard.

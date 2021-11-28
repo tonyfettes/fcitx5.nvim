@@ -1,14 +1,13 @@
 local M = {}
 local vim_api = vim.api
-local glib = require'lgi'.GLib
-local ctx = glib.MainLoop():get_context()
+local ctx = require'lgi'.GLib.MainLoop():get_context()
 
 local dbus = require'fcitx5.dbus'
 local ui = require'fcitx5.ui'
 
 local initialized = false
 local attached = false
-local default_config = {
+local config = {
   ui = {
     separator = '',
     padding = {left = 1, right = 1},
@@ -20,17 +19,14 @@ local function empty_func()
 end
 
 local ns_id = vim_api.nvim_create_namespace('fcitx5.nvim')
-local c_ui = ui.new(ns_id, default_config.ui)
+local c_ui = ui.new(ns_id, config.ui)
 
 M.setup = function (config_in)
-  local config = {
-    ui = {}
-  }
   if config_in and config_in.ui then
-    config.ui.separator = config_in.ui.separator or default_config.ui.separator
-    config.ui.padding = config_in.ui.padding or default_config.ui.padding
+    config.ui.separator = config_in.ui.separator or config.ui.separator
+    config.ui.padding = config_in.ui.padding or config.ui.padding
   end
-  c_ui:config(config)
+  c_ui:config(config.ui)
 end
 
 dbus.connect()
@@ -38,7 +34,7 @@ dbus.set_commit_cb(function (_, commit_string)
   c_ui:commit(commit_string)
 end)
 dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next)
-  if vim.fn.mode() == 'i' then
+  if vim_api.nvim_get_mode().mode == 'i' then
     M.ui_info = {
       preedits = preedits,
       cursor = cursor,
@@ -136,7 +132,6 @@ M.attach = function ()
     M.detach()
   end
   dbus.focus_in()
-  -- dbus.set_im('rime')
   c_ui:attach(vim_api.nvim_get_current_win())
   M.process_key = process_key
   M.move_cursor = move_cursor
@@ -229,7 +224,7 @@ vim.cmd[[
 ]]
 
 -- If user is current in insert mode, attach to current buffer immediately
-if vim.fn.mode() == 'i' then
+if vim_api.nvim_get_mode().mode == 'i' then
   M.attach()
 end
 
