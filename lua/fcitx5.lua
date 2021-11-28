@@ -8,28 +8,42 @@ local ui = require'fcitx5.ui'
 
 M.initialized = false
 M.attached = false
+M.config = {
+  ui = {
+    separator = '',
+    padding = {left = 1, right = 1},
+  }
+}
+
+M.setup = function (config_in)
+  if config_in and config_in.ui then
+    M.config.ui.separator = config_in.ui.separator or ''
+    M.config.ui.padding = config_in.ui.padding or {left = 1, right = 1}
+  end
+end
+
+local function empty_func()
+  error("fcitx5.nvim not initialized")
+end
+
+M.toggle = empty_func
 
 M.init = function ()
   if M.initialized == false then
-    vim.cmd[[
-      hi! link Fcitx5CandidateNormal None
-      hi! link Fcitx5CandidateSelected Search
-    ]]
     local ns_id = vim_api.nvim_create_namespace('fcitx5.nvim')
-    local c_ui = ui.new(ns_id, {
-      separator = '',
-      padding = {
-        left = 1,
-        right = 1,
-      }
-    })
+    local c_ui = ui.new(ns_id, M.config.ui)
     dbus.connect()
     dbus.set_commit_cb(function (_, commit_string)
       c_ui:commit(commit_string)
     end)
     dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next)
       if vim.fn.mode() == 'i' then
-        M.candidate_index = candidate_index
+        M.ui_info = {
+          preedits = preedits,
+          cursor = cursor,
+          candidates = candidates,
+          candidate_index = candidate_index
+        }
         c_ui:update(preedits, cursor, candidates, candidate_index)
       end
     end)
@@ -65,7 +79,10 @@ M.init = function ()
       end
     end
 
-    M.toggle = dbus.toggle
+    M.toggle = function ()
+      dbus.toggle()
+      c_ui:update({}, 0, {{'', dbus.get_im()}}, -1)
+    end
 
     M.ig = {}
     local function update_ig ()
@@ -124,13 +141,20 @@ M.init = function ()
         M.candidate_index = 0
         ---@param forward boolean
         M.enum_candidate = function (forward)
-          local candidate_index = M.candidate_index
-          if forward then
-            candidate_index = candidate_index + 1
-          else
-            candidate_index = candidate_index - 1
+          if M.ui_info ~= nil then
+            local candidate_index = M.ui_info.candidate_index
+            local candidate_size = #M.ui_info.candidates
+            if forward then
+              candidate_index = candidate_index + 1
+            else
+              candidate_index = candidate_index - 1
+            end
+            if candidate_index < candidate_size and candidate_index >= 0 then
+              dbus.select_candidate(candidate_index)
+              M.ui_info.candidate_index = candidate_index
+              c_ui:update(M.ui_info.preedits, M.ui_info.cursor, M.ui_info.candidates, M.ui_info.candidate_index)
+            end
           end
-          dbus.select_candidate(candidate_index)
         end
 
         vim.cmd[[
@@ -147,10 +171,10 @@ M.init = function ()
       if M.attached == true then
         dbus.focus_out()
         c_ui:detach()
-        M.process_key = nil
-        M.move_cursor = nil
-        M.candidate_index = nil
-        M.enum_candidate = nil
+        M.process_key = empty_func
+        M.move_cursor = empty_func
+        M.ui_info = nil
+        M.enum_candidate = empty_func
         vim.cmd[[
           augroup fcitx5_trigger
             au!
@@ -166,13 +190,13 @@ M.init = function ()
       if M.initialized == true then
         dbus.disconnect()
         c_ui:destroy()
-        M.toggle = nil
+        M.toggle = empty_func
         M.ig = nil
-        M.enum_im = nil
-        M.enum_ig = nil
-        M.attach = nil
-        M.detach = nil
-        M.destroy = function () end
+        M.enum_im = empty_func
+        M.enum_ig = empty_func
+        M.attach = empty_func
+        M.detach = empty_func
+        M.destroy = empty_func
         vim.cmd[[
           augroup fcitx5_hook
             au!
@@ -196,5 +220,17 @@ end
 
 M.destroy = function ()
 end
+
+vim.cmd[[
+  hi! link Fcitx5CandidateNormal None
+  hi! link Fcitx5CandidateSelected Search
+  hi! link Fcitx5PreeditNormal None
+  hi! link Fcitx5PreeditUnderline Underline
+  hi! link Fcitx5PreeditHighLight IncSearch
+  hi! link Fcitx5PreeditDontCommit None
+  hi! link Fcitx5PreeditBold Bold
+  hi Fcitx5PreeditStrike gui=strikethrough
+  hi! link Fcitx5PreeditItalic Italic
+]]
 
 return M

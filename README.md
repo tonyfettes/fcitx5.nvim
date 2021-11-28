@@ -2,6 +2,10 @@
 
 [WIP] fcitx5 client in neovim
 
+## Demo
+
+<video src="https://user-images.githubusercontent.com/29998228/143726417-f1d0b83b-9817-4620-ae2b-6216f1954f02.mp4" width="100%"></video>
+
 ## Install
 
 packer.nvim
@@ -13,19 +17,52 @@ use {
 }
 ```
 
-## Demo
+## Setup
 
-<video src="https://user-images.githubusercontent.com/29998228/143726417-f1d0b83b-9817-4620-ae2b-6216f1954f02.mp4" width="100%"></video>
+The example below shows the default values.
+
+```lua
+require'fcitx5'.setup = {
+  ui = {
+    separator = '',
+    padding = { left = 1, right = 1 }
+  }
+}
+
+vim.cmd[[
+hi! link Fcitx5CandidateNormal None
+hi! link Fcitx5CandidateSelected Search
+hi! link Fcitx5PreeditNormal None
+hi! link Fcitx5PreeditUnderline Underline
+hi! link Fcitx5PreeditHighLight IncSearch
+hi! link Fcitx5PreeditDontCommit None
+hi! link Fcitx5PreeditBold Bold
+hi Fcitx5PreeditStrike gui=strikethrough
+hi! link Fcitx5PreeditItalic Italic
+]]
+```
+
+## Example Usage
+
+```vimscript
+# Connect to Fcitx5
+require'fcitx5'.init()
+
+# Map Shift+Tab to toggle the most recent two input methods.
+# Function toggle() must be called after init().
+inoremap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>
+```
 
 ## Roadmap
 
 - [x] Fix error on exit
 - [x] Switchable input method and group (currently hardcoded to 'rime')
 - [x] Break into two windows for pre-edit and candidate list respectively
-- [ ] Select candidates with function
+- [x] Select candidates with function
 - [ ] If `'wrap'` is not set, scroll horizontal if pre-edit is too long, otherwise move to next line
-- [ ] Show current input method and input group
+- [ ] Show current input method and input group using dedicated window
 - [x] Highlight
+  - [x] Pre-edit highlight
 - [x] UI glitch on first keystroke after insert
 - [ ] Command-line support
 - [ ] Horizontal/Vertical layout

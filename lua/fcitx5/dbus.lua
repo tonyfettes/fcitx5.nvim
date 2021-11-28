@@ -156,4 +156,9 @@ M.set_update_ui_cb = function (cb)
   ic:connect_signal(cb, "UpdateClientSideUI")
 end
 
+---@param cb function
+M.set_current_im_cb = function (cb)
+  ic:connect_signal(cb, "CurrentIM")
+end
+
 return M
