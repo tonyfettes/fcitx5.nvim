@@ -20,7 +20,6 @@ use {
 
 The example below shows the default values.
 ```vim
-" setup() can be called before/after the loading of fcitx5.nvim
 lua<<EOF
 require'fcitx5'.setup = {
   ui = {
