@@ -164,7 +164,7 @@ M.update = function (ui, preedits, cursor, candidates, candidate_index)
     -- TODO: strwidth/strdisplaywidth
     local strwidth = vim.fn.strwidth
     local preedit_width = strwidth(preedit_string)
-    print("preedit_width: " .. preedit_width)
+    -- print("preedit_width: " .. preedit_width)
 
     -- Displays preedit window
     if preedit_width ~= 0 then
