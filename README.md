@@ -21,6 +21,8 @@ use {
 
 - [x] Fix error on exit
 - [x] Switchable input method and group (currently hardcoded to 'rime')
+- [x] Break into two windows for pre-edit and candidate list respectively
+- [ ] If `'wrap'` is not set, scroll horizontal if pre-edit is too long, otherwise move to next line
 - [ ] Show current input method and input group
 - [ ] Highlight
 - [x] UI glitch on first keystroke after insert
