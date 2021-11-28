@@ -46,7 +46,7 @@ local vim_api = vim.api
 ---@class ui.config
 ---@field separator string
 ---@field padding ui.config.padding
---
+
 ---Creates a new ui
 ---@param ns_id number
 ---@return ui
@@ -63,6 +63,7 @@ M.new = function (ns_id, config)
       right = string.rep(' ', config.padding.right),
       width = config.padding.left + config.padding.right
     },
+    config = M.config,
     attach = M.attach,
     detach = M.detach,
     update = M.update,
@@ -72,6 +73,17 @@ M.new = function (ns_id, config)
     destroy = M.destroy,
   }
   return new_ui
+end
+
+---@param ui ui
+---@param config ui.config
+M.config = function (ui, config)
+  ui.separator = config.separator
+  ui.padding = {
+    left = string.rep(' ', config.padding.left),
+    right = string.rep(' ', config.padding.right),
+    width = config.padding.left + config.padding.right
+  }
 end
 
 ---Set attach information of ui

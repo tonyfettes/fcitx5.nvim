@@ -21,15 +21,17 @@ use {
 
 The example below shows the default values.
 
-```lua
+```vimscript
+# setup() can be called before/after the loading of fcitx5.nvim
+lua<<EOF
 require'fcitx5'.setup = {
   ui = {
     separator = '',
     padding = { left = 1, right = 1 }
   }
 }
+EOF
 
-vim.cmd[[
 hi! link Fcitx5CandidateNormal None
 hi! link Fcitx5CandidateSelected Search
 hi! link Fcitx5PreeditNormal None
@@ -39,15 +41,11 @@ hi! link Fcitx5PreeditDontCommit None
 hi! link Fcitx5PreeditBold Bold
 hi Fcitx5PreeditStrike gui=strikethrough
 hi! link Fcitx5PreeditItalic Italic
-]]
 ```
 
 ## Example Usage
 
 ```vimscript
-# Connect to Fcitx5
-require'fcitx5'.init()
-
 # Map Shift+Tab to toggle the most recent two input methods.
 # Function toggle() must be called after init().
 inoremap <S-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>

@@ -32,6 +32,15 @@ M.init = function ()
   if M.initialized == false then
     local ns_id = vim_api.nvim_create_namespace('fcitx5.nvim')
     local c_ui = ui.new(ns_id, M.config.ui)
+
+    M.setup = function (config_in)
+      if config_in and config_in.ui then
+        M.config.ui.separator = config_in.ui.separator or ''
+        M.config.ui.padding = config_in.ui.padding or {left = 1, right = 1}
+      end
+      c_ui:config(M.config)
+    end
+
     dbus.connect()
     dbus.set_commit_cb(function (_, commit_string)
       c_ui:commit(commit_string)
@@ -222,15 +231,17 @@ M.destroy = function ()
 end
 
 vim.cmd[[
-  hi! link Fcitx5CandidateNormal None
-  hi! link Fcitx5CandidateSelected Search
-  hi! link Fcitx5PreeditNormal None
-  hi! link Fcitx5PreeditUnderline Underline
-  hi! link Fcitx5PreeditHighLight IncSearch
-  hi! link Fcitx5PreeditDontCommit None
-  hi! link Fcitx5PreeditBold Bold
-  hi Fcitx5PreeditStrike gui=strikethrough
-  hi! link Fcitx5PreeditItalic Italic
+  hi! default link Fcitx5CandidateNormal None
+  hi! default link Fcitx5CandidateSelected Search
+  hi! default link Fcitx5PreeditNormal None
+  hi! default link Fcitx5PreeditUnderline Underline
+  hi! default link Fcitx5PreeditHighLight IncSearch
+  hi! default link Fcitx5PreeditDontCommit None
+  hi! default link Fcitx5PreeditBold Bold
+  hi default Fcitx5PreeditStrike gui=strikethrough
+  hi! default link Fcitx5PreeditItalic Italic
 ]]
+
+M.init()
 
 return M
