@@ -129,52 +129,50 @@ M.enum_ig = function (forward)
 end
 
 M.attach = function ()
-  if attached == true then
-    M.detach()
-  end
-  dbus.focus_in()
-  c_ui:attach(vim_api.nvim_get_current_win())
-  M.process_key = process_key
-  M.move_cursor = move_cursor
+  if attached == false then
+    dbus.focus_in()
+    c_ui:attach(vim_api.nvim_get_current_win())
+    M.process_key = process_key
+    M.move_cursor = move_cursor
 
-  ---@param forward boolean
-  M.enum_candidate = function (forward)
-    if M.ui_info ~= nil then
-      local candidate_index = M.ui_info.candidate_index
-      local candidate_size = #M.ui_info.candidates
-      if forward then
-        candidate_index = candidate_index + 1
-      else
-        candidate_index = candidate_index - 1
-      end
-      if candidate_index < candidate_size and candidate_index >= 0 then
-        dbus.select_candidate(candidate_index)
-        M.ui_info.candidate_index = candidate_index
-        c_ui:update(M.ui_info.preedits, M.ui_info.cursor, M.ui_info.candidates, M.ui_info.candidate_index)
+    ---@param forward boolean
+    M.enum_candidate = function (forward)
+      if M.ui_info ~= nil then
+        local candidate_index = M.ui_info.candidate_index
+        local candidate_size = #M.ui_info.candidates
+        if forward then
+          candidate_index = candidate_index + 1
+        else
+          candidate_index = candidate_index - 1
+        end
+        if candidate_index < candidate_size and candidate_index >= 0 then
+          dbus.select_candidate(candidate_index)
+          M.ui_info.candidate_index = candidate_index
+          c_ui:update(M.ui_info.preedits, M.ui_info.cursor, M.ui_info.candidates, M.ui_info.candidate_index)
+        end
       end
     end
+    vim.cmd[[
+      augroup fcitx5_trigger
+        au!
+        autocmd InsertCharPre <buffer> lua require'fcitx5'.process_key(string.byte(vim.v.char))
+      augroup END
+    ]]
+    attached = true
   end
-  vim.cmd[[
-    augroup fcitx5_trigger
-      au!
-      autocmd InsertCharPre <buffer> lua require'fcitx5'.process_key(string.byte(vim.v.char))
-    augroup END
-  ]]
-  attached = true
 end
 
 M.detach = function ()
   if attached == true then
     dbus.focus_out()
+    ctx:iteration()
     c_ui:detach()
     M.process_key = empty_func
     M.move_cursor = empty_func
     M.ui_info = nil
     M.enum_candidate = empty_func
     vim.cmd[[
-      augroup fcitx5_trigger
-        au!
-      augroup END
+      autocmd! fcitx5_trigger
       augroup! fcitx5_trigger
     ]]
     attached = false
@@ -194,10 +192,8 @@ M.destroy = function ()
     M.detach = empty_func
     M.destroy = empty_func
     vim.cmd[[
-    augroup fcitx5_hook
-      au!
-    augroup END
-    augroup! fcitx5_hook
+      autocmd! fcitx5_hook
+      augroup! fcitx5_hook
     ]]
     initialized = false
   end
@@ -213,15 +209,15 @@ vim.cmd[[
 ]]
 
 vim.cmd[[
-  hi! default link Fcitx5CandidateNormal None
-  hi! default link Fcitx5CandidateSelected Search
-  hi! default link Fcitx5PreeditNormal None
-  hi! default link Fcitx5PreeditUnderline Underline
-  hi! default link Fcitx5PreeditHighLight IncSearch
-  hi! default link Fcitx5PreeditDontCommit None
-  hi! default link Fcitx5PreeditBold Bold
+  hi default link Fcitx5CandidateNormal None
+  hi default link Fcitx5CandidateSelected Search
+  hi default link Fcitx5PreeditNormal None
+  hi default link Fcitx5PreeditUnderline Underline
+  hi default link Fcitx5PreeditHighLight IncSearch
+  hi default link Fcitx5PreeditDontCommit None
+  hi default link Fcitx5PreeditBold Bold
   hi default Fcitx5PreeditStrike gui=strikethrough
-  hi! default link Fcitx5PreeditItalic Italic
+  hi default link Fcitx5PreeditItalic Italic
 ]]
 
 -- If user is current in insert mode, attach to current buffer immediately

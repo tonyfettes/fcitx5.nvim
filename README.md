@@ -42,7 +42,7 @@ hi! link Fcitx5PreeditItalic Italic
 
 ## Quick Start
 
-```vim
+```lua
 use {
   'tonyfettes/fcitx5.nvim',
   config = {

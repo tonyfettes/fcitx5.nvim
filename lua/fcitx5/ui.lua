@@ -92,25 +92,27 @@ end
 ---@param ui ui
 ---@param win number
 M.attach = function (ui, win)
-  assert(win)
   ui.input = ui.input or {}
-  if win == 0 then
-    ui.input.win = vim_api.nvim_get_current_win()
-  else
-    ui.input.win = win
+  if win == nil or win == 0 then
+    win = vim_api.nvim_get_current_win()
   end
-  ui.input.buf = vim_api.nvim_win_get_buf(win)
-  ui.input.cursor = vim_api.nvim_win_get_cursor(ui.input.win)
+  local buf = vim_api.nvim_win_get_buf(win)
+  if ui.input.win ~= win or buf ~= ui.input.buf then
+    ui:detach()
+    ui.input.win = win
+    ui.input.buf = buf
+    ui.input.cursor = vim_api.nvim_win_get_cursor(ui.input.win)
 
-  ui.preedit = ui.preedit or {}
-  ui.preedit.win = nil
-  ui.preedit.buf = ui.preedit.buf or nil
-  ui.preedit.cursor = 0
-  ui.preedit.length = 0
+    ui.preedit = ui.preedit or {}
+    ui.preedit.win = nil
+    ui.preedit.buf = ui.preedit.buf or nil
+    ui.preedit.cursor = 0
+    ui.preedit.length = 0
 
-  ui.candidates = ui.candidates or {}
-  ui.candidates.win = nil
-  ui.candidates.buf = ui.candidates.buf or nil
+    ui.candidates = ui.candidates or {}
+    ui.candidates.win = nil
+    ui.candidates.buf = ui.candidates.buf or nil
+  end
 end
 
 ---@param ui ui
