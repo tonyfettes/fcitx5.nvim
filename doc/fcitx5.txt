@@ -1,6 +1,8 @@
 *fcitx5.txt* A Fcitx5 client in Nvim
 *fcitx5.nvim* *fcitx5* *Fcitx5*
 
+
+
 Author: Tony Fettes <tonyfettes@tonyfettes.com>
 
 ==============================================================================
@@ -9,8 +11,11 @@ CONTENTS						*fcitx5-contents*
   Introduction						|fcitx5-introduction|
     Requirements					|fcitx5-requirements|
     Features						|fcitx5-features|
+    Limitations						|fcitx5-limitations|
     Quickstart						|fcitx5-quickstart|
   Functions						|fcitx5-functions|
+  Highlights						|fcitx5-highlights|
+
 
 ==============================================================================
 INTRODUCTION						*fcitx5-introduction*
@@ -21,8 +26,8 @@ This is a Fcitx5 client in Neovim. It utilize DBus to communicate with Fcitx5.
 REQUIREMENTS						*fcitx5-requirements*
 
 - This plugin is written on, and tested only on Neovim v0.6.0.
-- You need to have luarocks `dbus_proxy` and `lgi` installed. This can be done
-  with `packer.nvim`; or you may have to play with |'runtimepath'|.
+- You need to have luarocks dbus_proxy and lgi installed. This can be done
+  with |packer.nvim|; or you may have to play with |'runtimepath'|.
 - You need to have working installation of both DBus and Fcitx5 on your
   operating system.
 
@@ -35,15 +40,27 @@ FEATURES						*fcitx5-features*
 - Will not trigger input method in normal mode
 
 -----------------------------------------------------------------------------
+LIMITATIONS						*fcitx5-limitations*
+
+- Current the startup time of fcitx5.nvim is slow (~50ms on my machine). You
+  could postpone the load of fcitx5.nvim or set it to be trigger by some
+  events/keys/commands.
+- fcitx5.nvim can not act naturally when around the right edge of window,
+  i.e. it can neither scroll the screen horizontally when |'wrap'| is not set,
+  nor move the preedit to the next line when |'wrap'| is set.
+- Since fcitx5.nvim monitors keystrokes in |Insert-mode| and forward them to
+  Fcitx5 using DBus, every keystroke will have additional latency (~1ms).
+
+-----------------------------------------------------------------------------
 QUICKSTART						*fcitx5-quickstart*
 
 If you have `packer.nvim` installed, you could use following code to load
-`fcitx5.nvim`:
+fcitx5.nvim:
 >
   use {
     'tonyfettes/fcitx5.nvim',
     config = {
-      -- Load `fcitx5.nvim`
+      -- Load fcitx5.nvim
       require'fcitx5'.setup {}
       -- Map <M-Tab> to toggle between most recent two input methods.
       vim.cmd[[inoremap <M-Tab> <Cmd>lua require'fcitx5'.toggle()<CR>]]
@@ -56,10 +73,10 @@ If you have `packer.nvim` installed, you could use following code to load
 ==============================================================================
 FUNCTIONS						*fcitx5-functions*
 
-`fcitx5.nvim` provides following Lua functions
+fcitx5.nvim provides following Lua functions
 
 setup({config_in})					*fcitx5.setup()*
-	Configures `fcitx5.nvim`.
+	Configures fcitx5.nvim.
 
 	Parameters: ~
 		{config_in}	Configuration
@@ -93,7 +110,8 @@ enum_im({forward})					*fcitx5.enum_im()*
 attach()						*fcitx5.attach()*
 	Attach to current buffer.
 
-	Note: Calling this function will listen |InsertCharPre| on current buffer
+        Note: Calling this function will listen on |InsertCharPre| on current
+        buffer
 
 	See Also: ~
 		  |fcitx5.detach()|
@@ -107,5 +125,32 @@ detach()						*fcitx5.detach()*
 destroy()						*fcitx5.destroy()*
 	Destroy current input context from Fcitx5 and reset all provided
 	function to empty.
+
+==============================================================================
+HIGHLIGHTS						*fcitx5-highlights*
+
+Fcitx5CandidateNormal					*hl-Fcitx5CandidateNormal*
+	candidates that are not selected
+
+Fcitx5CandidateSelected					*hl-Fcitx5CandidateSelected*
+	candidates that are selected
+
+Fcitx5PreeditNormal					*hl-Fcitx5PreeditNormal*
+	normal preedit text 
+
+Fcitx5PreeditUnderline					*hl-Fcitx5PreeditUnderline*
+	underlined preedit text 
+
+Fcitx5PreeditDontCommit					*hl-Fcitx5PreeditDontCommit*
+	preedit text that will not commit
+
+Fcitx5PreeditBold					*hl-Fcitx5PreeditBold*
+	bold preedit text 
+
+Fcitx5PreeditStrike					*hl-Fcitx5PreeditStrike*
+	preedit text with strikethrough
+
+Fcitx5PreeditItalic					*hl-Fcitx5PreeditItalic*
+	italic preedit text
 
 vim:tw=78:ts=8:ft=help:norl:
