@@ -1,6 +1,6 @@
 # fcitx5.nvim
 
-[WIP] fcitx5 client in neovim
+[WIP] Fcitx5 client in neovim
 
 ## Demo
 
@@ -29,15 +29,15 @@ require'fcitx5'.setup = {
 }
 EOF
 
-hi! link Fcitx5CandidateNormal None
-hi! link Fcitx5CandidateSelected Search
-hi! link Fcitx5PreeditNormal None
-hi! link Fcitx5PreeditUnderline Underline
-hi! link Fcitx5PreeditHighLight IncSearch
-hi! link Fcitx5PreeditDontCommit None
-hi! link Fcitx5PreeditBold Bold
+hi link Fcitx5CandidateNormal None
+hi link Fcitx5CandidateSelected Search
+hi link Fcitx5PreeditNormal None
+hi link Fcitx5PreeditUnderline Underline
+hi link Fcitx5PreeditHighLight IncSearch
+hi link Fcitx5PreeditDontCommit None
+hi link Fcitx5PreeditBold Bold
 hi Fcitx5PreeditStrike gui=strikethrough
-hi! link Fcitx5PreeditItalic Italic
+hi link Fcitx5PreeditItalic Italic
 ```
 
 ## Quick Start
@@ -66,9 +66,11 @@ use {
   - [x] Pre-edit highlight
 - [x] UI glitch on first keystroke after insert
 - [x] Candidate list margin
+- [ ] Commit when focus out
+- [ ] True Client side pre-edit support.
+- [ ] Double-line mode, i.e. pre-edit is embedded in input method panel.
 - [ ] Horizontal/Vertical layout
 - [ ] Command-line support
-- [ ] Commit when focus out
 - [ ] \(Perhaps\) `CursorMovedI/InsertCharPre` to `nvim_buf_attach()`
 - [ ] \(Perhaps\) Show current input method and input group using dedicated window
 - [ ] <del>If `'wrap'` is not set, scroll horizontal if pre-edit is too long, otherwise move to next line.</del> Too hard.
