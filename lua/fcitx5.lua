@@ -8,26 +8,45 @@ local ui = require'fcitx5.ui'
 
 local initialized = false
 local attached = false
+
+---@class config
+---@field ui ui.config
+
 local config = {
+  ---@type ui.config
   ui = {
-    separator = '',
-    padding = {left = 1, right = 1},
-  }
+    preedit = {
+      style = 'embedded',
+    },
+    candidate = {
+      style = 'horizontal',
+      config = {
+        follow = 'anchor',
+        position = 'down',
+        separator = '',
+        padding = {
+          left = ' ',
+          right = ' ',
+        }
+      }
+    },
+  },
 }
 
 local function empty_func()
-  error("fcitx5.nvim not initialized")
+  error('fcitx5.nvim not initialized')
 end
 
 local ns_id = vim_api.nvim_create_namespace('fcitx5.nvim')
-local c_ui = ui.new(ns_id, config.ui)
+local c_ui = ui.new(ns_id)
 
+---@param config_in config
 M.setup = function (config_in)
   if config_in and config_in.ui then
-    config.ui.separator = config_in.ui.separator or config.ui.separator
-    config.ui.padding = config_in.ui.padding or config.ui.padding
+    config.ui.preedit = config_in.ui.preedit or config.ui.preedit
+    config.ui.candidate = config_in.ui.candidate or config.ui.candidate
   end
-  c_ui:config(config.ui)
+  c_ui:setup(config.ui)
 end
 
 dbus.connect()
@@ -40,7 +59,7 @@ dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidate
       preedits = preedits,
       cursor = cursor,
       candidates = candidates,
-      candidate_index = candidate_index
+      candidate_index = candidate_index,
     }
     c_ui:update(preedits, cursor, candidates, candidate_index)
   end
