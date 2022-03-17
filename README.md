@@ -16,6 +16,10 @@ use {
 }
 ```
 
+Then, check if Wayland Input method frontend is disabled in Fcitx5
+configuration, if your terminal support that. Otherwise, your terminal will
+capture your keystrokes and sent them to Fcitx5 instead of Neovim.
+
 ## Setup
 
 The example below shows the default values.
