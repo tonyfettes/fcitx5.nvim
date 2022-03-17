@@ -37,21 +37,20 @@ local function empty_func()
   error('fcitx5.nvim not initialized')
 end
 
-local ns_id = vim_api.nvim_create_namespace('fcitx5.nvim')
-local c_ui = ui.new(ns_id)
-
 ---@param config_in config
 M.setup = function (config_in)
   if config_in and config_in.ui then
     config.ui.preedit = config_in.ui.preedit or config.ui.preedit
     config.ui.candidate = config_in.ui.candidate or config.ui.candidate
   end
-  c_ui:setup(config.ui)
+  ui:setup(config.ui)
 end
 
 dbus.connect()
 dbus.set_commit_cb(function (_, commit_string)
-  c_ui:commit(commit_string)
+  ui:commit(commit_string)
+  -- Get UpdateClientSideUI signal
+  ctx:iteration()
 end)
 dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidates, candidate_index, layout_hint, has_prev, has_next)
   if string.match(vim_api.nvim_get_mode().mode, 'i') ~= nil then
@@ -61,44 +60,59 @@ dbus.set_update_ui_cb(function (_, preedits, cursor, aux_up, aux_down, candidate
       candidates = candidates,
       candidate_index = candidate_index,
     }
-    c_ui:update(preedits, cursor, candidates, candidate_index)
+    ui:update(preedits, cursor, candidates, candidate_index)
   end
 end)
 
+local function delete_character()
+  M.process_key(0xff08)
+end
+
+local function confirm()
+  M.process_key(0xff0d)
+end
+
 ---@param byte number
+---@return boolean is_accepted
 local function process_key(byte)
   local is_accepted = dbus.send_key(byte)
-  ctx:iteration()
   if is_accepted then
     vim.v.char = ''
   end
+  ctx:iteration()
+  return is_accepted
 end
 
-local function move_cursor()
-  local d_line, d_cursor, d_length = c_ui:move_cursor()
-  if d_line > 0 then
+local function notify_cursor_moved()
+  local line, column, preedit = ui:get_cursor_movement()
+  print('cursor movement: ' .. vim.inspect({line, column, preedit}))
+  -- (+-, *) line
+  if line > 0 then
     -- Enter
-    M.process_key(0xff0d)
-  elseif d_cursor > 0 then
+    for _ = 1, line, 1 do
+      M.process_key(0xff0d)
+    end
+  elseif column > 0 then
     -- Right
-    for _ = 1, d_cursor, 1 do
+    for _ = 1, column, 1 do
       M.process_key(0xff53)
     end
-  elseif d_cursor < 0 then
+  elseif column < 0 then
     -- Delete
-    for _ = -1, d_length, -1 do
+    for _ = -1, preedit, -1 do
       M.process_key(0xff08)
     end
     -- Left
-    for _ = -1, d_cursor - d_length, -1 do
+    for _ = -1, column - preedit, -1 do
       M.process_key(0xff51)
     end
   end
+  -- ctx:iteration()
 end
 
 M.toggle = function ()
   dbus.toggle()
-  c_ui:update({}, 0, {{'', dbus.get_im()}}, -1)
+  ui:update({}, 0, {{'', dbus.get_im()}}, -1)
 end
 
 M.ig = {}
@@ -150,9 +164,9 @@ end
 M.attach = function ()
   if attached == false then
     dbus.focus_in()
-    c_ui:attach(vim_api.nvim_get_current_win())
+    ui:attach(vim_api.nvim_get_current_win(), vim_api.nvim_get_current_buf())
     M.process_key = process_key
-    M.move_cursor = move_cursor
+    M.notify_cursor_moved = notify_cursor_moved
 
     ---@param forward boolean
     M.enum_candidate = function (forward)
@@ -167,7 +181,7 @@ M.attach = function ()
         if candidate_index < candidate_size and candidate_index >= 0 then
           dbus.select_candidate(candidate_index)
           M.ui_info.candidate_index = candidate_index
-          c_ui:update(M.ui_info.preedits, M.ui_info.cursor, M.ui_info.candidates, M.ui_info.candidate_index)
+          ui:update(M.ui_info.preedits, M.ui_info.cursor, M.ui_info.candidates, M.ui_info.candidate_index)
         end
       end
     end
@@ -185,9 +199,9 @@ M.detach = function ()
   if attached == true then
     dbus.focus_out()
     ctx:iteration()
-    c_ui:detach()
+    ui:detach()
     M.process_key = empty_func
-    M.move_cursor = empty_func
+    M.get_cursor_movement = empty_func
     M.ui_info = nil
     M.enum_candidate = empty_func
     vim.cmd[[
@@ -202,7 +216,7 @@ M.destroy = function ()
   M.detach()
   if initialized == true then
     dbus.disconnect()
-    c_ui:destroy()
+    ui:destroy()
     M.toggle = empty_func
     M.ig = nil
     M.enum_im = empty_func

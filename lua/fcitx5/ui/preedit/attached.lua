@@ -32,11 +32,13 @@ M.cursor_lock = false
 function M:setup(widget, config)
 end
 
----@param context ui.context
-function M:attach(context)
+function M:attach()
   self.draw_ctx = self.draw_ctx or {}
   self.draw_ctx.win = nil
   self.draw_ctx.buf = self.draw_ctx.buf or nil
+end
+
+function M:sync(context)
   self.input_ctx = context
 end
 
@@ -55,7 +57,7 @@ local function create_buf(widget)
       vim.cmd([[
         augroup fcitx5_preedit
           au!
-          autocmd CursorMovedI <buffer> lua require'fcitx5'.move_cursor()
+          autocmd CursorMovedI <buffer> lua require'fcitx5'.notify_cursor_moved()
           autocmd InsertCharPre <buffer> lua require'fcitx5'.process_key(string.byte(vim.v.char))
         augroup END
       ]])
@@ -81,7 +83,7 @@ local function open_win(widget, win_width, cursor)
     vim_api.nvim_win_call(widget.input_ctx.win, function ()
       widget.draw_ctx.win = vim_api.nvim_open_win(widget.draw_ctx.buf, false, win_config)
       vim_api.nvim_win_set_option(widget.draw_ctx.win, 'winhl', 'NormalFloat:Fcitx5PreeditNormal')
-      vim_api.nvim_win_set_option(widget.draw_ctx.win, 'cursorline', true)
+      vim_api.nvim_win_set_option(widget.draw_ctx.win, 'cursorline', vim.go.cursorline)
     end)
   else
     vim_api.nvim_win_set_width(widget.draw_ctx.win, win_width)
@@ -128,18 +130,20 @@ function M:update(preedits, cursor, _, _)
 end
 
 ---@return number line_diff
----@return number cursor_diff
+---@return number column_diff
 ---@return number preedit_diff
-function M:move_cursor()
+function M:get_cursor_movement()
+  -- Since preedit is displayed and manipulated separately in its window,
+  -- we know current line is the preedit.
   local line = vim_api.nvim_get_current_line()
-  local d_preedit = #line - self.draw_ctx.length
+  local preedit_diff = #line - self.draw_ctx.length
   self.draw_ctx.length = #line
 
   local lno, cursor = unpack(vim_api.nvim_win_get_cursor(self.draw_ctx.win))
-  local d_line = lno - 1
-  local d_cursor = cursor - self.draw_ctx.cursor[2]
+  local line_diff = lno - 1
+  local column_diff = cursor - self.draw_ctx.cursor[2]
   self.draw_ctx.cursor[2] = cursor
-  return d_line, d_cursor, d_preedit
+  return line_diff, column_diff, preedit_diff
 end
 
 function M:hide()

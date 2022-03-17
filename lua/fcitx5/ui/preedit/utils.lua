@@ -1,5 +1,5 @@
 ---@class ui.preedit : ui.widget
----@field move_cursor function
+---@field get_cursor_movement function
 
 local M = {}
 

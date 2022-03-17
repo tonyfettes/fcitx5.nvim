@@ -41,11 +41,15 @@ M.setup = function (widget, config)
 end
 
 ---@param widget ui.candidate.horizontal
----@param context ui.context
-M.attach = function (widget, context)
+M.attach = function (widget)
   widget.draw_ctx = widget.draw_ctx or {}
   widget.draw_ctx.win = nil
   widget.draw_ctx.buf = widget.draw_ctx.buf or nil
+end
+
+---@param widget ui.candidate.horizontal
+---@param context ui.context
+M.sync = function (widget, context)
   widget.input_ctx = context
 end
 
