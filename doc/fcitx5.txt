@@ -30,6 +30,9 @@ REQUIREMENTS						*fcitx5-requirements*
   with |packer.nvim|; or you may have to play with |'runtimepath'|.
 - You need to have working installation of both DBus and Fcitx5 on your
   operating system.
+- You need to make sure your UI does NOT have input method support itself,
+  otherwsie it will intercept your keystrokes and forwarded them to Fcitx5
+  before Neovim and fcitx5.nvim can see them.
 
 -----------------------------------------------------------------------------
 FEATURES						*fcitx5-features*

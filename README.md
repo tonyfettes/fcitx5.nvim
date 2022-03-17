@@ -1,6 +1,11 @@
 # fcitx5.nvim
 
-[WIP] Fcitx5 client in neovim
+[WIP but already in maintenance] Fcitx5 client in neovim
+
+## Reminds
+
+This plugin needs to be run with corresponding input method frontend **disabled**
+in either your Neovim UI (terminal emulator or GUI), or Fcitx5.
 
 ## Demo
 
@@ -17,8 +22,8 @@ use {
 ```
 
 Then, check if Wayland Input method frontend is disabled in Fcitx5
-configuration, if your terminal support that. Otherwise, your terminal will
-capture your keystrokes and sent them to Fcitx5 instead of Neovim.
+configuration, if your terminal/GUI support that. Otherwise, your terminal/GUI
+will capture your keystrokes and sent them to Fcitx5 instead of Neovim.
 
 ## Setup
 
